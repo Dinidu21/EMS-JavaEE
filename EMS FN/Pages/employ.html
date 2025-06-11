@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Management System</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
             --primary-color: #4361ee;
@@ -19,12 +19,13 @@
         body {
             background-color: #f5f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 60px;
         }
         
         .header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            padding: 2rem 0;
+            padding: 1.5rem 0;
             margin-bottom: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
@@ -63,6 +64,14 @@
         .employee-photo-placeholder {
             font-size: 3rem;
             color: #adb5bd;
+        }
+        
+        .employee-photo-sm {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #dee2e6;
         }
         
         .status-badge {
@@ -117,6 +126,7 @@
         .employee-table th {
             background-color: var(--primary-color);
             color: white;
+            vertical-align: middle;
         }
         
         .employee-table tr:nth-child(even) {
@@ -152,8 +162,50 @@
         footer {
             background-color: var(--dark-color);
             color: white;
-            padding: 20px 0;
-            margin-top: 40px;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        .modal-photo-container {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--success-color);
+            margin: 0 auto 15px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .modal-photo-placeholder {
+            font-size: 2.5rem;
+            color: #adb5bd;
+        }
+        
+        .floating-action-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
         }
     </style>
 </head>
@@ -163,8 +215,8 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h1><i class="fas fa-users me-3"></i>Employee Management System</h1>
-                    <p class="lead mb-0">Manage your team members efficiently</p>
+                    <h1><i class="fas fa-users me-3"></i>Employee Management</h1>
+                    <p class="lead mb-0">Manage your team efficiently</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="d-flex justify-content-md-end align-items-center">
@@ -221,106 +273,201 @@
             </div>
         </div>
 
-        <div class="row">
-            <!-- Employee Form -->
-            <div class="col-lg-5 mb-4">
-                <div class="form-section">
-                    <h3 class="mb-4"><i class="fas fa-user-plus me-2"></i>Add New Employee</h3>
+        <!-- Employee List -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Employee List</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="search-container">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search employees...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover employee-table">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- Employees will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button for Adding New Employee -->
+    <div class="floating-action-btn" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+        <i class="fas fa-plus fa-lg"></i>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addEmployeeModalLabel"><i class="fas fa-user-plus me-2"></i>Add New Employee</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                     <form id="employeeForm">
                         <!-- Photo Upload -->
-                        <div class="mb-3 text-center">
-                            <div class="employee-photo-container mb-3">
-                                <div class="employee-photo-placeholder" id="photoPlaceholder">
+                        <div class="mb-4 text-center">
+                            <div class="modal-photo-container">
+                                <div class="modal-photo-placeholder" id="addPhotoPlaceholder">
                                     <i class="fas fa-user"></i>
                                 </div>
-                                <img id="photoPreview" class="employee-photo" style="display: none;">
+                                <img id="addPhotoPreview" class="modal-photo" style="display: none;">
                             </div>
-                            <input type="file" class="form-control d-none" id="photo" accept="image/*">
-                            <button type="button" class="btn btn-outline-primary" id="uploadBtn">
+                            <input type="file" class="form-control d-none" id="addPhoto" accept="image/*">
+                            <button type="button" class="btn btn-outline-primary mt-2" id="addUploadBtn">
                                 <i class="fas fa-upload me-2"></i>Upload Photo
                             </button>
                         </div>
                         
-                        <!-- Name -->
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="name" placeholder="Enter full name" required>
-                        </div>
-                        
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" placeholder="Enter email" required>
-                        </div>
-                        
-                        <!-- Role -->
-                        <div class="mb-3">
-                            <label for="role" class="form-label">Role</label>
-                            <input type="text" class="form-control" id="role" placeholder="Enter role" required>
-                        </div>
-                        
-                        <!-- Address -->
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
-                            <textarea class="form-control" id="address" rows="3" placeholder="Enter address"></textarea>
-                        </div>
-                        
-                        <!-- Status -->
-                        <div class="mb-4">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status">
-                                <option value="Active" selected>Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Buttons -->
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-save me-2"></i>Save Employee
-                            </button>
-                            <button type="reset" class="btn btn-outline-secondary">
-                                <i class="fas fa-undo me-2"></i>Reset Form
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Employee List -->
-            <div class="col-lg-7">
-                <div class="card">
-                    <div class="card-header bg-white">
-                        <div class="row align-items-center">
+                        <div class="row">
                             <div class="col-md-6">
-                                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Employee List</h5>
+                                <!-- Name -->
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="name" placeholder="Enter full name" required>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="search-container">
-                                    <i class="fas fa-search"></i>
-                                    <input type="text" id="searchInput" class="form-control" placeholder="Search employees...">
+                                <!-- Email -->
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" placeholder="Enter email" required>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover employee-table">
-                                <thead>
-                                    <tr>
-                                        <th>Photo</th>
-                                        <th>Name</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="employeeTableBody">
-                                    <!-- Employees will be populated here -->
-                                </tbody>
-                            </table>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Role -->
+                                <div class="mb-3">
+                                    <label for="role" class="form-label">Role *</label>
+                                    <input type="text" class="form-control" id="role" placeholder="Enter role" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Status -->
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status">
+                                        <option value="Active" selected>Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                        
+                        <!-- Address -->
+                        <div class="mb-4">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" rows="2" placeholder="Enter address"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveEmployeeBtn">
+                        <i class="fas fa-save me-2"></i>Save Employee
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Employee Modal -->
+    <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="editEmployeeModalLabel"><i class="fas fa-user-edit me-2"></i>Edit Employee</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmployeeForm">
+                        <input type="hidden" id="editId">
+                        
+                        <!-- Photo Upload -->
+                        <div class="mb-4 text-center">
+                            <div class="modal-photo-container">
+                                <div class="modal-photo-placeholder" id="editPhotoPlaceholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <img id="editPhotoPreview" class="modal-photo" style="display: none;">
+                            </div>
+                            <input type="file" class="form-control d-none" id="editPhoto" accept="image/*">
+                            <button type="button" class="btn btn-outline-success mt-2" id="editUploadBtn">
+                                <i class="fas fa-upload me-2"></i>Change Photo
+                            </button>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Name -->
+                                <div class="mb-3">
+                                    <label for="editName" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="editName" placeholder="Enter full name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Email -->
+                                <div class="mb-3">
+                                    <label for="editEmail" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="editEmail" placeholder="Enter email" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Role -->
+                                <div class="mb-3">
+                                    <label for="editRole" class="form-label">Role *</label>
+                                    <input type="text" class="form-control" id="editRole" placeholder="Enter role" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Status -->
+                                <div class="mb-3">
+                                    <label for="editStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editStatus">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Address -->
+                        <div class="mb-4">
+                            <label for="editAddress" class="form-label">Address</label>
+                            <textarea class="form-control" id="editAddress" rows="2" placeholder="Enter address"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="updateEmployeeBtn">
+                        <i class="fas fa-sync-alt me-2"></i>Update Employee
+                    </button>
                 </div>
             </div>
         </div>
@@ -344,38 +491,48 @@
             $('#current-date').text(now.toLocaleDateString('en-US', options));
             
             // Sample employee data (simulating database records)
-            let employees = [
-                {
-                    id: 1,
-                    photo: null,
-                    name: "John Doe",
-                    email: "john.doe@example.com",
-                    role: "Software Engineer",
-                    address: "123 Main St, New York, NY",
-                    status: "Active",
-                    created_at: "2023-05-15 10:30:00"
-                },
-                {
-                    id: 2,
-                    photo: null,
-                    name: "Jane Smith",
-                    email: "jane.smith@example.com",
-                    role: "Product Manager",
-                    address: "456 Oak Ave, San Francisco, CA",
-                    status: "Active",
-                    created_at: "2023-04-22 14:45:00"
-                },
-                {
-                    id: 3,
-                    photo: null,
-                    name: "Robert Johnson",
-                    email: "robert.j@example.com",
-                    role: "UX Designer",
-                    address: "789 Pine Rd, Chicago, IL",
-                    status: "Inactive",
-                    created_at: "2023-03-10 09:15:00"
-                }
-            ];
+            // let employees = [
+            //     {
+            //         id: 1,
+            //         photo: null,
+            //         name: "John Doe",
+            //         email: "john.doe@example.com",
+            //         role: "Software Engineer",
+            //         address: "123 Main St, New York, NY",
+            //         status: "Active",
+            //         created_at: "2023-05-15 10:30:00"
+            //     },
+            //     {
+            //         id: 2,
+            //         photo: null,
+            //         name: "Jane Smith",
+            //         email: "jane.smith@example.com",
+            //         role: "Product Manager",
+            //         address: "456 Oak Ave, San Francisco, CA",
+            //         status: "Active",
+            //         created_at: "2023-04-22 14:45:00"
+            //     },
+            //     {
+            //         id: 3,
+            //         photo: null,
+            //         name: "Robert Johnson",
+            //         email: "robert.j@example.com",
+            //         role: "UX Designer",
+            //         address: "789 Pine Rd, Chicago, IL",
+            //         status: "Inactive",
+            //         created_at: "2023-03-10 09:15:00"
+            //     },
+            //     {
+            //         id: 4,
+            //         photo: null,
+            //         name: "Sarah Williams",
+            //         email: "sarah.w@example.com",
+            //         role: "Marketing Specialist",
+            //         address: "101 Maple Dr, Boston, MA",
+            //         status: "Active",
+            //         created_at: "2023-06-05 11:20:00"
+            //     }
+            // ];
             
             // Update stats
             function updateStats() {
@@ -398,26 +555,24 @@
                 employees.forEach(employee => {
                     const row = `
                     <tr>
-                        <td>
-                            <div class="employee-photo-container-sm" style="width:40px;height:40px;">
-                                ${employee.photo ? 
-                                  `<img src="${employee.photo}" class="employee-photo">` : 
-                                  `<i class="fas fa-user employee-photo-placeholder-sm" style="font-size:1rem;"></i>`}
-                            </div>
+                        <td class="align-middle">
+                            ${employee.photo ? 
+                                `<img src="${employee.photo}" class="employee-photo-sm">` : 
+                                `<div class="employee-photo-sm d-flex align-items-center justify-content-center bg-light">
+                                    <i class="fas fa-user text-muted"></i>
+                                </div>`}
                         </td>
-                        <td>${employee.name}</td>
-                        <td>${employee.role}</td>
-                        <td>
+                        <td class="align-middle">${employee.name}</td>
+                        <td class="align-middle">${employee.email}</td>
+                        <td class="align-middle">${employee.role}</td>
+                        <td class="align-middle">
                             <span class="status-badge ${employee.status === 'Active' ? 'status-active' : 'status-inactive'}">
                                 ${employee.status}
                             </span>
                         </td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary action-btn view-btn" data-id="${employee.id}">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                        <td class="align-middle">
                             <button class="btn btn-sm btn-outline-success action-btn edit-btn" data-id="${employee.id}">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-edit"></i> Edit
                             </button>
                             <button class="btn btn-sm btn-outline-danger action-btn delete-btn" data-id="${employee.id}">
                                 <i class="fas fa-trash"></i>
@@ -434,37 +589,59 @@
             // Initialize table
             renderEmployeeTable();
             
-            // Handle photo upload
-            $('#uploadBtn').click(function() {
-                $('#photo').click();
+            // Handle photo upload for add form
+            $('#addUploadBtn').click(function() {
+                $('#addPhoto').click();
             });
             
-            $('#photo').change(function(e) {
+            $('#addPhoto').change(function(e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
-                        $('#photoPreview').attr('src', event.target.result).show();
-                        $('#photoPlaceholder').hide();
+                        $('#addPhotoPreview').attr('src', event.target.result).show();
+                        $('#addPhotoPlaceholder').hide();
                     }
                     reader.readAsDataURL(file);
                 }
             });
             
-            // Form submission
-            $('#employeeForm').submit(function(e) {
-                e.preventDefault();
+            // Handle photo upload for edit form
+            $('#editUploadBtn').click(function() {
+                $('#editPhoto').click();
+            });
+            
+            $('#editPhoto').change(function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        $('#editPhotoPreview').attr('src', event.target.result).show();
+                        $('#editPhotoPlaceholder').hide();
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Save new employee
+            $('#saveEmployeeBtn').click(function() {
+                // Get photo data
+                let photoData = null;
+                if ($('#addPhotoPreview').is(':visible')) {
+                    photoData = $('#addPhotoPreview').attr('src');
+                }
                 
                 // Create new employee object
                 const newEmployee = {
                     id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1,
-                    photo: $('#photoPreview').attr('src') || null,
+                    photo: photoData,
                     name: $('#name').val(),
                     email: $('#email').val(),
                     role: $('#role').val(),
                     address: $('#address').val(),
                     status: $('#status').val(),
-                    created_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+                    created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                    updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
                 };
                 
                 // Add to employees array
@@ -476,10 +653,86 @@
                 // Show success message
                 showAlert('Employee added successfully!', 'success');
                 
-                // Reset form
+                // Reset form and close modal
                 $('#employeeForm')[0].reset();
-                $('#photoPreview').hide().attr('src', '');
-                $('#photoPlaceholder').show();
+                $('#addPhotoPreview').hide();
+                $('#addPhotoPlaceholder').show();
+                $('#addEmployeeModal').modal('hide');
+            });
+            
+            // Handle edit button click
+            $(document).on('click', '.edit-btn', function() {
+                const id = $(this).data('id');
+                const employee = employees.find(e => e.id === id);
+                
+                if (employee) {
+                    // Populate the edit form
+                    $('#editId').val(employee.id);
+                    $('#editName').val(employee.name);
+                    $('#editEmail').val(employee.email);
+                    $('#editRole').val(employee.role);
+                    $('#editAddress').val(employee.address);
+                    $('#editStatus').val(employee.status);
+                    
+                    // Handle photo
+                    if (employee.photo) {
+                        $('#editPhotoPreview').attr('src', employee.photo).show();
+                        $('#editPhotoPlaceholder').hide();
+                    } else {
+                        $('#editPhotoPreview').hide().attr('src', '');
+                        $('#editPhotoPlaceholder').show();
+                    }
+                    
+                    // Show the modal
+                    $('#editEmployeeModal').modal('show');
+                }
+            });
+            
+            // Update employee
+            $('#updateEmployeeBtn').click(function() {
+                const id = $('#editId').val();
+                const employeeIndex = employees.findIndex(e => e.id == id);
+                
+                if (employeeIndex !== -1) {
+                    // Get updated photo data
+                    let photoData = null;
+                    if ($('#editPhotoPreview').is(':visible')) {
+                        photoData = $('#editPhotoPreview').attr('src');
+                    }
+                    
+                    // Update employee object
+                    employees[employeeIndex] = {
+                        ...employees[employeeIndex],
+                        photo: photoData,
+                        name: $('#editName').val(),
+                        email: $('#editEmail').val(),
+                        role: $('#editRole').val(),
+                        address: $('#editAddress').val(),
+                        status: $('#editStatus').val(),
+                        updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+                    };
+                    
+                    // Update UI
+                    renderEmployeeTable();
+                    
+                    // Show success message
+                    showAlert('Employee updated successfully!', 'success');
+                    
+                    // Close modal
+                    $('#editEmployeeModal').modal('hide');
+                }
+            });
+            
+            // Delete employee
+            $(document).on('click', '.delete-btn', function() {
+                const id = $(this).data('id');
+                const employee = employees.find(e => e.id === id);
+                
+                if (employee && confirm(`Are you sure you want to delete ${employee.name}?`)) {
+                    employees = employees.filter(e => e.id !== id);
+                    renderEmployeeTable();
+                    showAlert(`Employee ${employee.name} has been deleted`, 'danger');
+                }
             });
             
             // Search functionality
@@ -505,31 +758,6 @@
                     alert.alert('close');
                 }, 3000);
             }
-            
-            // Simulate view button click
-            $(document).on('click', '.view-btn', function() {
-                const id = $(this).data('id');
-                const employee = employees.find(e => e.id === id);
-                showAlert(`Viewing details for: ${employee.name}`, 'info');
-            });
-            
-            // Simulate edit button click
-            $(document).on('click', '.edit-btn', function() {
-                const id = $(this).data('id');
-                const employee = employees.find(e => e.id === id);
-                showAlert(`Editing employee: ${employee.name}`, 'warning');
-            });
-            
-            // Simulate delete button click
-            $(document).on('click', '.delete-btn', function() {
-                const id = $(this).data('id');
-                const employee = employees.find(e => e.id === id);
-                if (confirm(`Are you sure you want to delete ${employee.name}?`)) {
-                    employees = employees.filter(e => e.id !== id);
-                    renderEmployeeTable();
-                    showAlert(`Employee ${employee.name} has been deleted`, 'danger');
-                }
-            });
         });
     </script>
 </body>
