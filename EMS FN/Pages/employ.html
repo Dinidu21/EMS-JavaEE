@@ -160,12 +160,11 @@
         }
         
         footer {
-            background-color: var(--dark-color);
-            color: white;
-            padding: 15px 0;
-            position: fixed;
+            color: black;
+            position: static;
             bottom: 0;
             width: 100%;
+            font-weight: 500;
         }
         
         .modal-photo-container {
@@ -479,80 +478,53 @@
         </div>
     </footer>
 
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         $(document).ready(function() {
-            // Set current date
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            $('#current-date').text(now.toLocaleDateString('en-US', options));
-            
-            // Sample employee data (simulating database records)
-            // let employees = [
-            //     {
-            //         id: 1,
-            //         photo: null,
-            //         name: "John Doe",
-            //         email: "john.doe@example.com",
-            //         role: "Software Engineer",
-            //         address: "123 Main St, New York, NY",
-            //         status: "Active",
-            //         created_at: "2023-05-15 10:30:00"
-            //     },
-            //     {
-            //         id: 2,
-            //         photo: null,
-            //         name: "Jane Smith",
-            //         email: "jane.smith@example.com",
-            //         role: "Product Manager",
-            //         address: "456 Oak Ave, San Francisco, CA",
-            //         status: "Active",
-            //         created_at: "2023-04-22 14:45:00"
-            //     },
-            //     {
-            //         id: 3,
-            //         photo: null,
-            //         name: "Robert Johnson",
-            //         email: "robert.j@example.com",
-            //         role: "UX Designer",
-            //         address: "789 Pine Rd, Chicago, IL",
-            //         status: "Inactive",
-            //         created_at: "2023-03-10 09:15:00"
-            //     },
-            //     {
-            //         id: 4,
-            //         photo: null,
-            //         name: "Sarah Williams",
-            //         email: "sarah.w@example.com",
-            //         role: "Marketing Specialist",
-            //         address: "101 Maple Dr, Boston, MA",
-            //         status: "Active",
-            //         created_at: "2023-06-05 11:20:00"
-            //     }
-            // ];
-            
-            // Update stats
-            function updateStats() {
-                $('#total-employees').text(employees.length);
-                const active = employees.filter(e => e.status === 'Active').length;
-                const inactive = employees.filter(e => e.status === 'Inactive').length;
-                $('#active-employees').text(active);
-                $('#inactive-employees').text(inactive);
-                
-                // Count unique roles
-                const roles = [...new Set(employees.map(e => e.role))];
-                $('#total-roles').text(roles.length);
-            }
-            
-            // Render employee table
-            function renderEmployeeTable() {
-                const tableBody = $('#employeeTableBody');
-                tableBody.empty();
-                
-                employees.forEach(employee => {
-                    const row = `
+        // Set current date
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        $('#current-date').text(now.toLocaleDateString('en-US', options));
+        // Base URL for API requests
+        const BaseUrl = 'http://localhost:8080';
+
+        // Fetch and render employees
+        function fetchEmployees() {
+            $.ajax({
+                url: BaseUrl+'/api/v1/employees',
+                method: 'GET',
+                success: function(employees) {
+                    renderEmployeeTable(employees);
+                    updateStats(employees);
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Error fetching employees: ' + error, 'danger');
+                    console.error(error);
+                }
+            });
+        }
+
+        // Update stats
+        function updateStats(employees) {
+            $('#total-employees').text(employees.length);
+            const active = employees.filter(e => e.status === 'Active').length;
+            const inactive = employees.filter(e => e.status === 'Inactive').length;
+            $('#active-employees').text(active);
+            $('#inactive-employees').text(inactive);
+            const roles = [...new Set(employees.map(e => e.role))];
+            $('#total-roles').text(roles.length);
+        }
+
+        // Render employee table
+        function renderEmployeeTable(employees) {
+            const tableBody = $('#employeeTableBody');
+            tableBody.empty();
+
+            employees.forEach(employee => {
+                const row = `
                     <tr>
                         <td class="align-middle">
                             ${employee.photo ? 
@@ -578,102 +550,97 @@
                             </button>
                         </td>
                     </tr>
-                    `;
-                    tableBody.append(row);
-                });
-                
-                updateStats();
-            }
-            
-            // Initialize table
-            renderEmployeeTable();
-            
-            // Handle photo upload for add form
-            $('#addUploadBtn').click(function() {
-                $('#addPhoto').click();
+                `;
+                tableBody.append(row);
             });
-            
-            $('#addPhoto').change(function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        $('#addPhotoPreview').attr('src', event.target.result).show();
-                        $('#addPhotoPlaceholder').hide();
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Handle photo upload for edit form
-            $('#editUploadBtn').click(function() {
-                $('#editPhoto').click();
-            });
-            
-            $('#editPhoto').change(function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        $('#editPhotoPreview').attr('src', event.target.result).show();
-                        $('#editPhotoPlaceholder').hide();
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Save new employee
-            $('#saveEmployeeBtn').click(function() {
-                // Get photo data
-                let photoData = null;
-                if ($('#addPhotoPreview').is(':visible')) {
-                    photoData = $('#addPhotoPreview').attr('src');
-                }
-                
-                // Create new employee object
-                const newEmployee = {
-                    id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1,
-                    photo: photoData,
-                    name: $('#name').val(),
-                    email: $('#email').val(),
-                    role: $('#role').val(),
-                    address: $('#address').val(),
-                    status: $('#status').val(),
-                    created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-                    updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        }
+
+        // Initialize table
+        fetchEmployees();
+
+        // Handle photo upload for add form
+        $('#addUploadBtn').click(function() {
+            $('#addPhoto').click();
+        });
+
+        $('#addPhoto').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    $('#addPhotoPreview').attr('src', event.target.result).show();
+                    $('#addPhotoPlaceholder').hide();
                 };
-                
-                // Add to employees array
-                employees.push(newEmployee);
-                
-                // Update UI
-                renderEmployeeTable();
-                
-                // Show success message
-                showAlert('Employee added successfully!', 'success');
-                
-                // Reset form and close modal
-                $('#employeeForm')[0].reset();
-                $('#addPhotoPreview').hide();
-                $('#addPhotoPlaceholder').show();
-                $('#addEmployeeModal').modal('hide');
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle photo upload for edit form
+        $('#editUploadBtn').click(function() {
+            $('#editPhoto').click();
+        });
+
+        $('#editPhoto').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    $('#editPhotoPreview').attr('src', event.target.result).show();
+                    $('#editPhotoPlaceholder').hide();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Save new employee
+        $('#saveEmployeeBtn').click(function() {
+            let photoData = null;
+            if ($('#addPhotoPreview').is(':visible')) {
+                photoData = $('#addPhotoPreview').attr('src');
+            }
+
+            const newEmployee = {
+                name: $('#name').val(),
+                email: $('#email').val(),
+                role: $('#role').val(),
+                address: $('#address').val(),
+                status: $('#status').val(),
+                photo: photoData
+            };
+
+            $.ajax({
+                url: BaseUrl+'/api/v1/employees',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(newEmployee),
+                success: function() {
+                    fetchEmployees();
+                    showAlert('Employee added successfully!', 'success');
+                    $('#employeeForm')[0].reset();
+                    $('#addPhotoPreview').hide();
+                    $('#addPhotoPlaceholder').show();
+                    $('#addEmployeeModal').modal('hide');
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Error adding employee: ' + error, 'danger');
+                }
             });
-            
-            // Handle edit button click
-            $(document).on('click', '.edit-btn', function() {
-                const id = $(this).data('id');
-                const employee = employees.find(e => e.id === id);
-                
-                if (employee) {
-                    // Populate the edit form
+        });
+
+        // Handle edit button click
+        $(document).on('click', '.edit-btn', function() {
+            const id = $(this).data('id');
+            $.ajax({
+                url: BaseUrl+`/api/v1/employees/${id}`,
+                method: 'GET',
+                success: function(employee) {
                     $('#editId').val(employee.id);
                     $('#editName').val(employee.name);
                     $('#editEmail').val(employee.email);
                     $('#editRole').val(employee.role);
                     $('#editAddress').val(employee.address);
                     $('#editStatus').val(employee.status);
-                    
-                    // Handle photo
+
                     if (employee.photo) {
                         $('#editPhotoPreview').attr('src', employee.photo).show();
                         $('#editPhotoPlaceholder').hide();
@@ -681,83 +648,90 @@
                         $('#editPhotoPreview').hide().attr('src', '');
                         $('#editPhotoPlaceholder').show();
                     }
-                    
-                    // Show the modal
+
                     $('#editEmployeeModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Error fetching employee: ' + error, 'danger');
                 }
             });
-            
-            // Update employee
-            $('#updateEmployeeBtn').click(function() {
-                const id = $('#editId').val();
-                const employeeIndex = employees.findIndex(e => e.id == id);
-                
-                if (employeeIndex !== -1) {
-                    // Get updated photo data
-                    let photoData = null;
-                    if ($('#editPhotoPreview').is(':visible')) {
-                        photoData = $('#editPhotoPreview').attr('src');
-                    }
-                    
-                    // Update employee object
-                    employees[employeeIndex] = {
-                        ...employees[employeeIndex],
-                        photo: photoData,
-                        name: $('#editName').val(),
-                        email: $('#editEmail').val(),
-                        role: $('#editRole').val(),
-                        address: $('#editAddress').val(),
-                        status: $('#editStatus').val(),
-                        updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
-                    };
-                    
-                    // Update UI
-                    renderEmployeeTable();
-                    
-                    // Show success message
+        });
+
+        // Update employee
+        $('#updateEmployeeBtn').click(function() {
+            const id = $('#editId').val();
+            let photoData = null;
+            if ($('#editPhotoPreview').is(':visible')) {
+                photoData = $('#editPhotoPreview').attr('src');
+            }
+
+            const updatedEmployee = {
+                name: $('#editName').val(),
+                email: $('#editEmail').val(),
+                role: $('#editRole').val(),
+                address: $('#editAddress').val(),
+                status: $('#editStatus').val(),
+                photo: photoData
+            };
+
+            $.ajax({
+                url: BaseUrl+`/api/v1/employees/${id}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(updatedEmployee),
+                success: function() {
+                    fetchEmployees();
                     showAlert('Employee updated successfully!', 'success');
-                    
-                    // Close modal
                     $('#editEmployeeModal').modal('hide');
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Error updating employee: ' + error, 'danger');
                 }
             });
-            
-            // Delete employee
-            $(document).on('click', '.delete-btn', function() {
-                const id = $(this).data('id');
-                const employee = employees.find(e => e.id === id);
-                
-                if (employee && confirm(`Are you sure you want to delete ${employee.name}?`)) {
-                    employees = employees.filter(e => e.id !== id);
-                    renderEmployeeTable();
-                    showAlert(`Employee ${employee.name} has been deleted`, 'danger');
-                }
-            });
-            
-            // Search functionality
-            $('#searchInput').on('keyup', function() {
-                const value = $(this).val().toLowerCase();
-                $('#employeeTableBody tr').filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+
+        // Delete employee
+        $(document).on('click', '.delete-btn', function() {
+            const id = $(this).data('id');
+            if (confirm('Are you sure you want to delete this employee?')) {
+                $.ajax({
+                    url: BaseUrl+   `/api/v1/employees/${id}`,
+                    method: 'DELETE',
+                    success: function() {
+                        fetchEmployees();
+                        showAlert('Employee deleted successfully!', 'danger');
+                    },
+                    error: function(xhr, status, error) {
+                        showAlert('Error deleting employee: ' + error, 'danger');
+                    }
                 });
-            });
-            
-            // Show alert function
-            function showAlert(message, type) {
-                const alert = $(`
-                    <div class="alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 1000;">
-                        ${message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `);
-                
-                $('body').append(alert);
-                
-                setTimeout(() => {
-                    alert.alert('close');
-                }, 3000);
             }
         });
+
+        // Search functionality (client-side filtering)
+        $('#searchInput').on('keyup', function() {
+            const value = $(this).val().toLowerCase();
+            $('#employeeTableBody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // Show alert function
+        function showAlert(message, type) {
+            const alert = $(`
+                <div class="alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 1000;">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `);
+
+            $('body').append(alert);
+
+            setTimeout(() => {
+                alert.alert('close');
+            }, 3000);
+        }
+    });
     </script>
 </body>
 </html>
